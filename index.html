@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE SSC with Raj</title>
+<style>
+  :root {
+    --navy-deep: #0a1830;
+    --navy-panel: #102244;
+    --navy-line: #24365c;
+    --gold: #d4af37;
+    --gold-soft: #e8cd6d;
+    --white: #f4f6fa;
+    --white-muted: #c3cde0;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--navy-deep);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(212,175,55,0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(212,175,55,0.05), transparent 40%);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: var(--white);
+    min-height: 100vh;
+  }
+
+  header {
+    text-align: center;
+    padding: 56px 20px 40px;
+    border-bottom: 1px solid var(--navy-line);
+  }
+
+  header h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 700;
+    color: var(--gold);
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    letter-spacing: 0.5px;
+    margin: 0;
+    text-shadow: 0 2px 18px rgba(212,175,55,0.25);
+  }
+
+  header p {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--white-muted);
+    margin-top: 12px;
+    font-size: 1rem;
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  .column {
+    background: var(--navy-panel);
+    border: 1px solid var(--navy-line);
+    border-radius: 6px;
+    padding: 32px 28px;
+  }
+
+  .column h2 {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--gold-soft);
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+    border-bottom: 1px solid var(--navy-line);
+    padding-bottom: 14px;
+  }
+
+  .column .col-note {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--white-muted);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    margin: 16px 0 26px;
+  }
+
+  .pdf-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--navy-line);
+  }
+
+  .pdf-item:last-child { border-bottom: none; }
+
+  .pdf-text h3 {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--white);
+    font-size: 1.02rem;
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+
+  .pdf-text p {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: var(--white-muted);
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .download-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .download-btn:hover {
+    background: var(--gold);
+    color: var(--navy-deep);
+  }
+
+  .download-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--white-muted);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 0.8rem;
+    border-top: 1px solid var(--navy-line);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ACE SSC with Raj</h1>
+  <p>Free study material for SSC CGL, CHSL &amp; CPO aspirants</p>
+</header>
+
+<main>
+
+  <!-- LEFT COLUMN: Static GK series -->
+  <section class="column">
+    <h2>Static GK — Bare Minimum Series</h2>
+    <p class="col-note">
+      Bare minimum GK topics you cannot afford to skip: Folk &amp; Classical Dances,
+      Fairs &amp; Festivals, Books &amp; Authors, Carnatic Music, Industrial Policy,
+      New Criminal Laws, Space Missions, Government Schemes, and Five Year Plans.
+      Cover every part of this series — no shortcuts.
+    </p>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>GK Part 1</h3>
+        <p>Folk &amp; Classical Dances and Fairs &amp; Festivals — quick revision notes.</p>
+      </div>
+      <a class="download-btn" href="pdfs/gk-part-1.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>GK Part 2</h3>
+        <p>Books &amp; Authors — most repeated names and titles in past SSC papers.</p>
+      </div>
+      <a class="download-btn" href="pdfs/gk-part-2.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>GK Part 3</h3>
+        <p>Carnatic Music — key terms, instruments and forms asked in exams.</p>
+      </div>
+      <a class="download-btn" href="pdfs/gk-part-3.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>GK Part 4</h3>
+        <p>Industrial Policy — major policies and their significance, simplified.</p>
+      </div>
+      <a class="download-btn" href="pdfs/gk-part-4.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>GK Part 5</h3>
+        <p>New Criminal Laws — the recent changes SSC has been asking about.</p>
+      </div>
+      <a class="download-btn" href="pdfs/gk-part-5.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>GK Part 6</h3>
+        <p>Space Missions &amp; Government Schemes — the ones that show up every year.</p>
+      </div>
+      <a class="download-btn" href="pdfs/gk-part-6.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>GK Part 7</h3>
+        <p>Five Year Plans — targets, focus areas and outcomes at a glance.</p>
+      </div>
+      <a class="download-btn" href="pdfs/gk-part-7.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- RIGHT COLUMN: Practice series -->
+  <section class="column">
+    <h2>High-Yield Practice Series</h2>
+    <p class="col-note">
+      Five sets everyone should attempt without fail — proven to work across
+      CGL, CHSL and CPO tiers.
+    </p>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>CGL Top 100 Maths Questions</h3>
+        <p>The 100 most important maths questions for SSC CGL 2025, with solutions.</p>
+      </div>
+      <a class="download-btn" href="pdfs/cgl-top-100-maths.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>CHSL Top 100 Maths Questions</h3>
+        <p>The 100 most important maths questions for SSC CHSL 2025, with solutions.</p>
+      </div>
+      <a class="download-btn" href="pdfs/chsl-top-100-maths.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>CPO Top Maths Questions</h3>
+        <p>Top maths questions curated specifically for the SSC CPO exam pattern.</p>
+      </div>
+      <a class="download-btn" href="pdfs/cpo-top-maths.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>CGL Top 125 Reasoning Questions</h3>
+        <p>125 handpicked reasoning questions built to match the CGL 2025 pattern.</p>
+      </div>
+      <a class="download-btn" href="pdfs/cgl-top-125-reasoning.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+
+    <div class="pdf-item">
+      <div class="pdf-text">
+        <h3>Edukutti Complete Vocab (2025)</h3>
+        <p>Every vocabulary word actually asked in SSC exams through 2025, in one file.</p>
+      </div>
+      <a class="download-btn" href="pdfs/edukutti-vocab-2025.pdf" download title="Download PDF">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  ACE SSC with Raj — free resources for serious aspirants.
+</footer>
+
+</body>
+</html>
