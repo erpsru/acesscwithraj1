@@ -345,9 +345,24 @@
   </div>
 </div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCDRy0sB2edBDFKLzxKVl7agMxN_LDMF4o",
+    authDomain: "ace-ssc-raj.firebaseapp.com",
+    projectId: "ace-ssc-raj",
+    storageBucket: "ace-ssc-raj.firebasestorage.app",
+    messagingSenderId: "884060968714",
+    appId: "1:884060968714:web:a17d971fd9fa5f9e4a8cf3"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const docRef = db.collection("aceSSC").doc("data");
+
   const ADMIN_CODE = "Raj@8840";
-  const STORAGE_KEY = "aceSSCData_v1";
   const ADMIN_SESSION_KEY = "aceSSCAdmin";
 
   const SECTIONS = [
@@ -380,21 +395,37 @@
     ]
   };
 
-  let data = loadData();
+  let data = JSON.parse(JSON.stringify(defaultData));
   let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
   let currentSection = "maths";
   let editingContext = null; // { section, id } or null for "add"
+  let dataLoaded = false;
 
-  function loadData() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return JSON.parse(JSON.stringify(defaultData));
-  }
+  // Live sync: every visitor listens to the same Firestore document.
+  docRef.onSnapshot(
+    (doc) => {
+      if (doc.exists) {
+        data = doc.data();
+      } else if (!dataLoaded) {
+        // First-ever load: seed Firestore with the default data.
+        docRef.set(defaultData).catch(() => {});
+        data = JSON.parse(JSON.stringify(defaultData));
+      }
+      dataLoaded = true;
+      render();
+    },
+    (err) => {
+      console.error("Firestore sync error:", err);
+      document.getElementById("pdfList").innerHTML =
+        '<p class="empty-note">Could not load live data. Check your internet connection and refresh.</p>';
+    }
+  );
 
   function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    docRef.set(data).catch((err) => {
+      alert("Could not save — check your connection and try again.");
+      console.error(err);
+    });
   }
 
   const downloadIcon = `<svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>`;
@@ -557,7 +588,9 @@
     ov.addEventListener("click", e => { if (e.target === ov) ov.classList.remove("show"); });
   });
 
-  render();
+  // Show tabs immediately; list will populate once Firestore data arrives.
+  renderTabs();
+  document.getElementById("pdfList").innerHTML = '<p class="empty-note">Loading...</p>';
 </script>
 
 </body>
