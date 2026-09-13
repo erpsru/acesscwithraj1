@@ -421,12 +421,8 @@
     }
   );
 
-  function saveData() {
-    docRef.set(data).catch((err) => {
-      alert("Could not save — check your connection and try again.");
-      console.error(err);
-    });
-  }
+  // Writes now go through Firestore transactions (see itemSave / itemDelete below)
+  // to avoid overwriting concurrent changes from other tabs/devices.
 
   const downloadIcon = `<svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>`;
   const editIcon = `<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
@@ -552,7 +548,7 @@
     setTimeout(() => itemNameInput.focus(), 50);
   }
 
-  document.getElementById("itemSave").addEventListener("click", () => {
+  document.getElementById("itemSave").addEventListener("click", async () => {
     const name = itemNameInput.value.trim();
     const link = itemLinkInput.value.trim();
 
@@ -562,25 +558,57 @@
     }
 
     const { section, id } = editingContext;
-    if (id) {
-      const item = data[section].find(i => i.id === id);
-      item.name = name;
-      item.link = link;
-    } else {
-      data[section].push({ id: "item_" + Date.now(), name, link });
-    }
+    const saveBtn = document.getElementById("itemSave");
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
 
-    saveData();
-    itemOverlay.classList.remove("show");
-    render();
+    try {
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(docRef);
+        const serverData = snap.exists ? snap.data() : JSON.parse(JSON.stringify(defaultData));
+        const arr = serverData[section] ? serverData[section].slice() : [];
+
+        if (id) {
+          const idx = arr.findIndex(i => i.id === id);
+          if (idx !== -1) arr[idx] = { ...arr[idx], name, link };
+        } else {
+          arr.push({ id: "item_" + Date.now(), name, link });
+        }
+
+        serverData[section] = arr;
+        tx.set(docRef, serverData);
+      });
+      itemOverlay.classList.remove("show");
+    } catch (err) {
+      alert("Could not save — check your connection and try again.");
+      console.error(err);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save";
+    }
   });
 
-  itemDeleteBtn.addEventListener("click", () => {
+  itemDeleteBtn.addEventListener("click", async () => {
     const { section, id } = editingContext;
-    data[section] = data[section].filter(i => i.id !== id);
-    saveData();
-    itemOverlay.classList.remove("show");
-    render();
+    itemDeleteBtn.disabled = true;
+    itemDeleteBtn.textContent = "Removing...";
+
+    try {
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(docRef);
+        const serverData = snap.exists ? snap.data() : JSON.parse(JSON.stringify(defaultData));
+        const arr = (serverData[section] || []).filter(i => i.id !== id);
+        serverData[section] = arr;
+        tx.set(docRef, serverData);
+      });
+      itemOverlay.classList.remove("show");
+    } catch (err) {
+      alert("Could not remove — check your connection and try again.");
+      console.error(err);
+    } finally {
+      itemDeleteBtn.disabled = false;
+      itemDeleteBtn.textContent = "Remove this PDF";
+    }
   });
 
   // Close modals on overlay click
