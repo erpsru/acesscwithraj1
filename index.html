@@ -351,6 +351,7 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -365,7 +366,7 @@
   const db = firebase.firestore();
   const docRef = db.collection("aceSSC").doc("data_v2");
 
-  const ADMIN_CODE = "Raj@8840";
+  
   const ADMIN_SESSION_KEY = "aceSSCAdmin";
 
   const SECTIONS = [
@@ -489,12 +490,13 @@
   const passwordError = document.getElementById("passwordError");
 
   adminBtn.addEventListener("click", () => {
-    if (isAdmin) {
-      isAdmin = false;
-      sessionStorage.removeItem(ADMIN_SESSION_KEY);
-      render();
-      return;
-    }
+  if (isAdmin) {
+    isAdmin = false;
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    firebase.auth().signOut();
+    render();
+    return;
+  }
     passwordInput.value = "";
     passwordError.classList.remove("show");
     passwordOverlay.classList.add("show");
@@ -509,16 +511,22 @@
   passwordInput.addEventListener("keydown", e => { if (e.key === "Enter") submitPassword(); });
 
   function submitPassword() {
-    if (passwordInput.value === ADMIN_CODE) {
+  const password = passwordInput.value;
+  const adminEmail = "admin@acessc.com"; // <-- Enter your Firebase Auth email here
+
+  firebase.auth().signInWithEmailAndPassword(adminEmail, password)
+    .then(() => {
       isAdmin = true;
       sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
       passwordOverlay.classList.remove("show");
       render();
-    } else {
+    })
+    .catch((err) => {
+      console.error(err);
+      passwordError.textContent = "Incorrect password or email.";
       passwordError.classList.add("show");
-    }
-  }
-
+    });
+}
   // Add / Edit item modal
   const itemOverlay = document.getElementById("itemOverlay");
   const itemModalTitle = document.getElementById("itemModalTitle");
