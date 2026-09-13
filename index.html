@@ -363,7 +363,10 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  const docRef = db.collection("aceSSC").doc("data_v2");
+  
+  // Each PDF is stored as an independent document in aceSSCItems
+  const itemsCol = db.collection("aceSSCItems");
+  const oldDocRef = db.collection("aceSSC").doc("data");
 
   const ADMIN_CODE = "Raj@8840";
   const ADMIN_SESSION_KEY = "aceSSCAdmin";
@@ -377,44 +380,63 @@
 
   const defaultData = {
     maths: [
-      { id: "m1", name: "CGL 2025 Maths — Top 100, Chapterwise", link: "" },
-      { id: "m2", name: "CPO 25 — Best Quant Questions", link: "" },
-      { id: "m3", name: "CHSL PRE 25 — Best Quant Questions", link: "" }
+      { name: "CGL 2025 Maths — Top 100, Chapterwise", link: "" },
+      { name: "CPO 25 — Best Quant Questions", link: "" },
+      { name: "CHSL PRE 25 — Best Quant Questions", link: "" }
     ],
     ga: [
-      { id: "g1", name: "Important Books & Authors — Arun Kumar (AIR-5)", link: "" },
-      { id: "g2", name: "Carnatic Music", link: "" },
-      { id: "g3", name: "Industrial Policy", link: "" },
-      { id: "g4", name: "New Criminal Laws", link: "" },
-      { id: "g5", name: "Space CA", link: "" },
-      { id: "g6", name: "Government Schemes", link: "" },
-      { id: "g7", name: "Five Year Plans", link: "" }
+      { name: "Important Books & Authors — Arun Kumar (AIR-5)", link: "" },
+      { name: "Carnatic Music", link: "" },
+      { name: "Industrial Policy", link: "" },
+      { name: "New Criminal Laws", link: "" },
+      { name: "Space CA", link: "" },
+      { name: "Government Schemes", link: "" },
+      { name: "Five Year Plans", link: "" }
     ],
     reasoning: [
-      { id: "r1", name: "CGL 2025 Reasoning — Top 100+", link: "" }
+      { name: "CGL 2025 Reasoning — Top 100+", link: "" }
     ],
     english: [
-      { id: "e1", name: "All Vocabs by Inspector Baba", link: "" }
+      { name: "All Vocabs by Inspector Baba", link: "" }
     ]
   };
 
-  let data = JSON.parse(JSON.stringify(defaultData));
-  let isAdmin = sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  let data = { maths: [], ga: [], reasoning: [], english: [] };
+  let isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === "true";
   let currentSection = "maths";
-  let editingContext = null; // { section, id } or null for "add"
-  let dataLoaded = false;
+  let editingContext = null;
+  let migrating = false;
 
-  // Live sync: every visitor listens to the same Firestore document.
-  docRef.onSnapshot(
-    (doc) => {
-      if (doc.exists) {
-        data = doc.data();
-      } else if (!dataLoaded) {
-        // First-ever load: seed Firestore with the default data.
-        docRef.set(defaultData).catch(() => {});
-        data = JSON.parse(JSON.stringify(defaultData));
+  // Real-time listener: updates automatically whenever any document changes
+  itemsCol.onSnapshot(
+    async (snapshot) => {
+      // First-time run: automatically import existing PDFs from old database
+      if (snapshot.empty && !migrating) {
+        migrating = true;
+        await migrateExistingData();
+        migrating = false;
+        return;
       }
-      dataLoaded = true;
+
+      const grouped = { maths: [], ga: [], reasoning: [], english: [] };
+      snapshot.forEach((doc) => {
+        const it = doc.data();
+        const sec = it.section || "maths";
+        if (!grouped[sec]) grouped[sec] = [];
+        grouped[sec].push({
+          id: doc.id,
+          name: it.name || "",
+          link: it.link || "",
+          createdAt: it.createdAt || 0
+        });
+      });
+
+      // Maintain consistent creation order within each section
+      for (const sec in grouped) {
+        grouped[sec].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      }
+
+      data = grouped;
       render();
     },
     (err) => {
@@ -424,8 +446,37 @@
     }
   );
 
-  // Writes now go through Firestore transactions (see itemSave / itemDelete below)
-  // to avoid overwriting concurrent changes from other tabs/devices.
+  // Auto-migration: copies all current PDFs from aceSSC/data into individual documents
+  async function migrateExistingData() {
+    try {
+      const oldDoc = await oldDocRef.get();
+      const source = oldDoc.exists ? oldDoc.data() : defaultData;
+      const batch = db.batch();
+      let count = 0;
+      let timeOffset = Date.now() - 100000;
+
+      for (const s of SECTIONS) {
+        const list = source[s.id] || defaultData[s.id] || [];
+        for (const it of list) {
+          timeOffset += 1000;
+          const newDocRef = itemsCol.doc();
+          batch.set(newDocRef, {
+            section: s.id,
+            name: it.name,
+            link: it.link || "",
+            createdAt: timeOffset
+          });
+          count++;
+        }
+      }
+      if (count > 0) {
+        await batch.commit();
+        console.log(`Migrated ${count} PDFs into aceSSCItems collection!`);
+      }
+    } catch (e) {
+      console.error("Migration error:", e);
+    }
+  }
 
   const downloadIcon = `<svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>`;
   const editIcon = `<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;
@@ -482,7 +533,7 @@
     document.getElementById("adminBtn").classList.toggle("active", isAdmin);
   }
 
-  // Admin login
+  // Admin login toggle
   const adminBtn = document.getElementById("adminBtn");
   const passwordOverlay = document.getElementById("passwordOverlay");
   const passwordInput = document.getElementById("passwordInput");
@@ -491,7 +542,7 @@
   adminBtn.addEventListener("click", () => {
     if (isAdmin) {
       isAdmin = false;
-      sessionStorage.removeItem(ADMIN_SESSION_KEY);
+      localStorage.removeItem(ADMIN_SESSION_KEY);
       render();
       return;
     }
@@ -511,7 +562,7 @@
   function submitPassword() {
     if (passwordInput.value === ADMIN_CODE) {
       isAdmin = true;
-      sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+      localStorage.setItem(ADMIN_SESSION_KEY, "true");
       passwordOverlay.classList.remove("show");
       render();
     } else {
@@ -535,10 +586,10 @@
     itemError.classList.remove("show");
 
     if (id) {
-      const item = data[section].find(i => i.id === id);
+      const item = (data[section] || []).find(i => i.id === id);
       itemModalTitle.textContent = "Edit PDF";
-      itemNameInput.value = item.name;
-      itemLinkInput.value = item.link;
+      itemNameInput.value = item ? item.name : "";
+      itemLinkInput.value = item ? item.link : "";
       itemDeleteBtn.style.display = "block";
     } else {
       itemModalTitle.textContent = "Add PDF";
@@ -551,6 +602,7 @@
     setTimeout(() => itemNameInput.focus(), 50);
   }
 
+  // Save: creates or updates ONLY this single document
   document.getElementById("itemSave").addEventListener("click", async () => {
     const name = itemNameInput.value.trim();
     const link = itemLinkInput.value.trim();
@@ -560,66 +612,62 @@
       return;
     }
 
-    const { section, id } = editingContext;
     const saveBtn = document.getElementById("itemSave");
-    saveBtn.disabled = true;
+    const origText = saveBtn.textContent;
     saveBtn.textContent = "Saving...";
+    saveBtn.disabled = true;
 
     try {
-      await db.runTransaction(async (tx) => {
-        const snap = await tx.get(docRef);
-        const serverData = snap.exists ? snap.data() : JSON.parse(JSON.stringify(defaultData));
-        const arr = serverData[section] ? serverData[section].slice() : [];
-
-        if (id) {
-          const idx = arr.findIndex(i => i.id === id);
-          if (idx !== -1) arr[idx] = { ...arr[idx], name, link };
-        } else {
-          arr.push({ id: "item_" + Date.now(), name, link });
-        }
-
-        serverData[section] = arr;
-        tx.set(docRef, serverData);
-      });
+      const { section, id } = editingContext;
+      if (id) {
+        await itemsCol.doc(id).update({
+          name: name,
+          link: link
+        });
+      } else {
+        await itemsCol.add({
+          section: section,
+          name: name,
+          link: link,
+          createdAt: Date.now()
+        });
+      }
       itemOverlay.classList.remove("show");
     } catch (err) {
-      alert("Could not save — check your connection and try again.");
+      alert("Could not save: " + (err.message || err));
       console.error(err);
     } finally {
+      saveBtn.textContent = origText;
       saveBtn.disabled = false;
-      saveBtn.textContent = "Save";
     }
   });
 
+  // Delete: deletes ONLY this single document
   itemDeleteBtn.addEventListener("click", async () => {
-    const { section, id } = editingContext;
-    itemDeleteBtn.disabled = true;
+    const { id } = editingContext;
+    if (!id) return;
+
+    const origText = itemDeleteBtn.textContent;
     itemDeleteBtn.textContent = "Removing...";
+    itemDeleteBtn.disabled = true;
 
     try {
-      await db.runTransaction(async (tx) => {
-        const snap = await tx.get(docRef);
-        const serverData = snap.exists ? snap.data() : JSON.parse(JSON.stringify(defaultData));
-        const arr = (serverData[section] || []).filter(i => i.id !== id);
-        serverData[section] = arr;
-        tx.set(docRef, serverData);
-      });
+      await itemsCol.doc(id).delete();
       itemOverlay.classList.remove("show");
     } catch (err) {
-      alert("Could not remove — check your connection and try again.");
+      alert("Could not delete: " + (err.message || err));
       console.error(err);
     } finally {
+      itemDeleteBtn.textContent = origText;
       itemDeleteBtn.disabled = false;
-      itemDeleteBtn.textContent = "Remove this PDF";
     }
   });
 
-  // Close modals on overlay click
+  // Close modals on background click
   [passwordOverlay, itemOverlay].forEach(ov => {
     ov.addEventListener("click", e => { if (e.target === ov) ov.classList.remove("show"); });
   });
 
-  // Show tabs immediately; list will populate once Firestore data arrives.
   renderTabs();
   document.getElementById("pdfList").innerHTML = '<p class="empty-note">Loading...</p>';
 </script>
